@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 
 transform = transforms.ToTensor()
 
-trainset = torchvision.datasets.FashionMNIST(
+trainset = torchvision.datasets.CIFAR10(
     root="./data",
     train=True,
     download=True,
@@ -21,7 +21,7 @@ trainloader = DataLoader(
 )
 
 model = nn.Sequential(
-    nn.Conv2d(1, 32, kernel_size=3, padding=1),
+    nn.Conv2d(3, 32, kernel_size=3, padding=1),
     nn.ReLU(),
     nn.MaxPool2d(2),
 
@@ -30,7 +30,7 @@ model = nn.Sequential(
     nn.MaxPool2d(2),
 
     nn.Flatten(),
-    nn.Linear(64 * 7 * 7, 128),
+    nn.Linear(64 * 8 * 8, 128),
     nn.ReLU(),
     nn.Linear(128, 10)
 )
@@ -64,7 +64,7 @@ print("Training complete")
 torch.save(model.state_dict(), "model.pth")
 print("Model saved")
 
-testset = torchvision.datasets.FashionMNIST(
+testset = torchvision.datasets.CIFAR10(
     root="./data",
     train=False,
     download=True,

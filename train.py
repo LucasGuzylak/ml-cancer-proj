@@ -18,7 +18,7 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 trainloader = DataLoader(
-    torch.utils.data.Subset(trainset, range(5000)),
+    trainset,
     batch_size=64,
     shuffle=True,
     num_workers=0
@@ -65,7 +65,7 @@ testset = torchvision.datasets.CIFAR10(
 )
 
 testloader = DataLoader(
-    torch.utils.data.Subset(testset, range(1000)), 
+    testset,
     batch_size=64, 
     shuffle=False
 )

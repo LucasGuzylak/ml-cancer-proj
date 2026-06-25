@@ -63,3 +63,26 @@ print("Training complete")
 
 torch.save(model.state_dict(), "model.pth")
 print("Model saved")
+
+testset = torchvision.datasets.FashionMNIST(
+    root="./data",
+    train=False,
+    download=True,
+    transform=transform
+)
+
+testloader = DataLoader(testset, batch_size=64, shuffle=False)
+
+correct = 0
+total = 0
+
+model.eval()
+with torch.no_grad():
+    for images, labels in testloader:
+        outputs = model(images)
+        predicted = outputs.argmax(dim=1)
+        correct += (predicted == labels).sum().item()
+        total += labels.size(0)
+
+accuracy = 100 * correct / total
+print(f"Test Accuracy: {accuracy:.1f}%")

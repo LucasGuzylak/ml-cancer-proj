@@ -4,7 +4,11 @@ import torchvision.transforms as transforms
 from torch import nn
 from torch.utils.data import DataLoader
 
-transform = transforms.ToTensor()
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
 trainset = torchvision.datasets.CIFAR10(
     root="./data",
@@ -14,26 +18,15 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 trainloader = DataLoader(
-    trainset,
+    torch.utils.data.Subset(trainset, range(5000)),
     batch_size=64,
     shuffle=True,
     num_workers=0
 )
 
-model = nn.Sequential(
-    nn.Conv2d(3, 32, kernel_size=3, padding=1),
-    nn.ReLU(),
-    nn.MaxPool2d(2),
+model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
 
-    nn.Conv2d(32, 64, kernel_size=3, padding=1),
-    nn.ReLU(),
-    nn.MaxPool2d(2),
-
-    nn.Flatten(),
-    nn.Linear(64 * 8 * 8, 128),
-    nn.ReLU(),
-    nn.Linear(128, 10)
-)
+model.fc = nn.Linear(512, 10)
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -71,7 +64,11 @@ testset = torchvision.datasets.CIFAR10(
     transform=transform
 )
 
-testloader = DataLoader(testset, batch_size=64, shuffle=False)
+testloader = DataLoader(
+    torch.utils.data.Subset(testset, range(1000)), 
+    batch_size=64, 
+    shuffle=False
+)
 
 correct = 0
 total = 0

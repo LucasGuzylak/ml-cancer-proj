@@ -33,7 +33,7 @@ testloader = DataLoader(
 )
 
 model = torchvision.models.resnet18(weights="IMAGENET1K_V1")
-model.fc = nn.linear(512, 9)
+model.fc = nn.Linear(512, 9)
 model = model.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
@@ -62,22 +62,23 @@ for epoch in range(5):
     accuracy = 100 * correct / total
     print(f"Epoch {epoch + 1} | Loss: {total_loss:.2f} | Accuracy: {accuracy:.1f}%")
 
-    print("Training complete")
+print("Training complete")
 
-    torch.save(model.state_dict(), "medical.pth")
-    print("Model saved")
+torch.save(model.state_dict(), "medical.pth")
+print("Model saved")
 
-    correct = 0
-    total = 0
+correct = 0
+total = 0
 
-    model.eval()
-    with torch.no_grad():
-        for images, labels in testloader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            predicted = outputs.argmax(dim=1)
-            correct += (predicted == labels).sum().item()
-            total += labels.size(0)
+model.eval()
+with torch.no_grad():
+    for images, labels in testloader:
+        labels = labels.squeeze().long()
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        predicted = outputs.argmax(dim=1)
+        correct += (predicted == labels).sum().item()
+        total += labels.size(0)
 
-    accuracy = 100 * correct / total
-    print(f"Test Accuracy: {accuracy:.1f}%")
+accuracy = 100 * correct / total
+print(f"Test Accuracy: {accuracy:.1f}%")

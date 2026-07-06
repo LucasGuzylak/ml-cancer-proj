@@ -14,7 +14,7 @@ print(f"Using device: {device}")
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
-    transforms.Grayscale(num_output_channels=3),  # ADD THIS LINE
+    transforms.Grayscale(num_output_channels=3),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
@@ -119,13 +119,21 @@ def create_bags(dataset, num_bags=200, bag_size=10):
     bags = []
     labels = []
     
-    for _ in range(num_bags):
-        indices = np.random.randint(0, len(dataset), bag_size)
+    cancer_indices = [i for i in range(len(dataset)) if dataset[i][1] == 3]
+    normal_indices = [i for i in range(len(dataset)) if dataset[i][1] != 3]
+    
+    for i in range(num_bags):
+        if i % 2 == 0:
+            indices = np.random.choice(normal_indices, bag_size - 3).tolist()
+            indices += np.random.choice(cancer_indices, 3).tolist()
+            label = 1
+        else:
+            indices = np.random.choice(normal_indices, bag_size).tolist()
+            label = 0
+            
         bag_patches = [Image.fromarray(np.array(dataset[i][0])) for i in indices]
-        bag_label = int(any(dataset[i][1] > 0 for i in indices))
-        
         bags.append(bag_patches)
-        labels.append(bag_label)
+        labels.append(label)
     
     return bags, labels
 

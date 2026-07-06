@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 from PIL import Image
 import os
+import medmnist
+from medmnist import TissueMNIST
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
@@ -86,3 +88,68 @@ def train(model, trainloader, optimizer, loss_fn):
 
     accuracy = 100 * correct / total
     return total_loss, accuracy
+
+def evaluate(model, testloader, loss_fn):
+    model.eval()
+    total_loss = 0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for bags, labels in testloader:
+            bags = bags.to(device)
+            labels = labels.float().to(device)
+
+            outputs = model(bags)
+            loss = loss_fn(outputs.squeeze(), labels.squeeze())
+
+            total_loss += loss.item()
+            predicted = (outputs.squeeze() > 0.5).float()
+            correct += (predicted == labels.squeeze()).sum().item()
+            total += labels.size(0)
+
+    accuracy = 100 * correct / total
+    return total_loss, accuracy
+
+trainset_raw = TissueMNIST(split="train", download=True)
+testset_raw = TissueMNIST(split="test", download=True)
+
+def create_bags(dataset, num_bags=200, bag_size=10):
+    bags = []
+    labels = []
+    
+    for _ in range(num_bags):
+        indices = np.random.randint(0, len(dataset), bag_size)
+        bag_patches = [Image.fromarray(np.array(dataset[i][0])) for i in indices]
+        bag_label = int(any(dataset[i][1] > 0 for i in indices))
+        
+        bags.append(bag_patches)
+        labels.append(bag_label)
+    
+    return bags, labels
+
+train_bags, train_labels = create_bags(trainset_raw, num_bags=200)
+test_bags, test_labels = create_bags(testset_raw, num_bags=50)
+
+print(f"Training bags: {len(train_bags)}")
+print(f"Test bags: {len(test_bags)}")
+
+trainset = MILDataset(train_bags, train_labels, transform=transform)
+testset = MILDataset(test_bags, test_labels, transform=transform)
+
+trainloader = DataLoader(trainset, batch_size=1, shuffle=True)
+testloader = DataLoader(testset, batch_size=1, shuffle=False)
+
+model = MILModel().to(device)
+loss_fn = nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+for epoch in range(10):
+    train_loss, train_acc = train(model, trainloader, optimizer, loss_fn)
+    test_loss, test_acc = evaluate(model, testloader, loss_fn)
+    
+    print(f"Epoch {epoch + 1} | Train Loss: {train_loss:.2f} | Train Acc: {train_acc:.1f}% | Test Acc: {test_acc:.1f}%")
+
+print("Training complete")
+torch.save(model.state_dict(), "cancer.pth")
+print("Model saved")

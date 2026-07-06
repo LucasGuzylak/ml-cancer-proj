@@ -129,8 +129,11 @@ def create_bags(dataset, num_bags=200, bag_size=10):
     
     return bags, labels
 
-train_bags, train_labels = create_bags(trainset_raw, num_bags=200)
-test_bags, test_labels = create_bags(testset_raw, num_bags=50)
+train_bags, train_labels = create_bags(trainset_raw, num_bags=500, bag_size=20)
+test_bags, test_labels = create_bags(testset_raw, num_bags=100, bag_size=20)
+
+print(f"Training - Cancer: {sum(train_labels)} No Cancer: {len(train_labels) - sum(train_labels)}")
+print(f"Test - Cancer: {sum(test_labels)} No Cancer: {len(test_labels) - sum(test_labels)}")
 
 print(f"Training bags: {len(train_bags)}")
 print(f"Test bags: {len(test_bags)}")
